@@ -1,0 +1,55 @@
+---
+title: "Práctica final"
+author: "Pilar Ruiz Navarro, Lucas Fehlau Arbulu"
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: true
+    toc_depth: 2
+    number_sections: false
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
+  pdf_document:
+    keep_tex: true
+---
+
+
+<!-- 
+Esquema del trabajo de ejemplo de Prado:
+# Preprocesamiento de datos
+## Descripción
+## Carga de datos
+## Valores perdidos
+## Análisis exploratorio
+## Outliers
+
+# ACP
+# AF
+
+# AD
+## Lineal
+## Cuadrático
+-->
+
+# Abstract 
+<!-- Opcional, supongo -->
+
+
+# Introducción
+
+```{r}
+
+```
+
+
+# Read the data
+
+# Univariate exploratory analysis
+
+## Valores faltantes
+
+<!-- qqplots, etc -->
+
+# Distribución multivariante
+
