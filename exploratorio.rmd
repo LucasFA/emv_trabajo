@@ -63,7 +63,7 @@ Esquema del trabajo de acuerdo al guión:
 # Read the data
 
 ```{r}
-data <- read.csv()
+# data <- read.csv()
 
 ```
 
