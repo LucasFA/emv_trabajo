@@ -51,6 +51,7 @@ Esquema del trabajo de acuerdo al guión:
 ### Lineal
 ### Cuadrático
 ## h) Validar modelos 
+## i) Análisis cluster
 
 # Abstract 
 <!-- Opcional, supongo -->
