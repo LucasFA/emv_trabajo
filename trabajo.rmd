@@ -35,7 +35,7 @@ Esquema del trabajo de ejemplo de Prado:
 Esquema del trabajo de acuerdo al guión:
 # Análisis exploratorio univariante
 ## a) Recodificaciones/agrupaciones de datos/variables (preprocesado)
-## b) Valoers perdidos
+## b) Valores perdidos
 ## c) Análisis descriptivo (summary, código de clase)
 ## d) Outliers (código de clase)
 ## e) Comprobar normalidad. qqplot
