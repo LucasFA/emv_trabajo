@@ -1,0 +1,14 @@
+on:
+  push:
+    branches:
+      - main
+
+  jobs:
+    render:
+      name: Compila Rmd
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: r-lib/actions/setup-r@v1
+
+
