@@ -6,6 +6,7 @@ jobs:
   render:
     name: Compila Rmd
     runs-on: ubuntu-latest
+    container: docker://pandoc/core:2.9
     permissions:
       contents: write
     steps:
