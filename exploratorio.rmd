@@ -63,7 +63,7 @@ Esquema del trabajo de ejemplo de Prado:
 # Introducción
 
 
-# Read the data
+# Lectura de datos
 
 ```{r}
 # data <- read.csv()
