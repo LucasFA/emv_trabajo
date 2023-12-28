@@ -117,13 +117,51 @@ boxplot(data[-1], main = "Outliers", # -1 quita la última variable. Quitar la q
 
 ## Normalidad univariante
 <!-- qqplots para variables continuas, etc -->
-
-
-
-
-
+```{r}
+par(mfrow=c(2,3))
+for (k in 2:4) {
+  j0 <- names(datos)[k]
+  x0 <- seq(min(datos[, k]), max(datos[, k]), le = 50)
+  for (i in 1:2) {
+    i0 <- levels(datos$especie)[i]
+    x <- datos[datos$especie == i0, j0]
+    qqnorm(x, main = paste("especie", i0, j0), pch = 19, col = i + 1)
+    qqline(x)
+  }
+}
+# Ejemplo una variable:
+qqnorm(no_out_standard$insu,
+  main = "Insulin",
+  col = "cornflowerblue",
+  cex.lab = 1.2, cex.main = 1.5,
+  xlab = "Theoretical quantiles (normal distribution)",
+  ylab = "Empirical quantiles",
+)
+qqline(no_out_standard$insu, distribution = qnorm)
+```
 
 
 
 # Distribución multivariante
+
+## Correlación
+```{r}
+library(psych)
+dataset_normalizado <- scale(dataset)
+cortest.bartlett(cor(dataset_normalizado), n = nrow(dataset_normalizado))
+```
+## Outliers 
+(de nuevo. Se incluye o no dependiendo de como se haya tratado antes)
+
+## Decisiones sobre NA (< 5 %)
+
+<!-- apartado d -->
+## ACP
+
+### Número de componentes principales
+
+<!-- apartado e -->
+## AF
+
+### Número de factores
 
