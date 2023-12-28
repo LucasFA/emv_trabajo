@@ -71,11 +71,59 @@ Esquema del trabajo de ejemplo de Prado:
 ```
 
 
-# Univariate exploratory analysis
+# Análisis exploratorio univariante
+Las variables del conjunto de datos son:
+- Esto
+- Aquello
 
+<!-- Apartado b -->
 ## Valores faltantes
+<!-- b.i) -->
+Porcentaje de datos faltantes:
+```{r}
+colMeans(is.na(data)) * 100
+```
 
-<!-- qqplots, etc -->
+<!-- Si más del 5%, analizar si es completely at random: -->
+<!-- Para ello, estudiar la homogeneidad según grupos (NA y no -->
+<!-- NA) con otras variables. Si son continuas, con un test de student, si son cualitativas o -->
+<!-- discretas con test de independencia Chi-cuadrado, etc. -->
+<!-- (Investigar funciones para el contraste de medias como t.test(), etc. del lenguaje R.) -->
+
+
+<!-- Apartado c analisis descriptivo -->
+## Analisis descriptivo
+```{r warning=FALSE, message=FALSE}
+colnames(data)
+
+head(data)
+
+freq(data$nombre_columna)
+freq(data$nombre_columna)
+freq(data$nombre_columna)
+freq(data$nombre_columna)
+
+```
+
+## Outliers
+  ```{r warning=FALSE, message=FALSE}
+boxplot(data[-1], main = "Outliers", # -1 quita la última variable. Quitar la que 
+        xlab = "Variables explicativas",
+        ylab = "Valor",
+        col = c(1:2)) # numero de columnas!
+
+```
+
+
+## Normalidad univariante
+<!-- qqplots para variables continuas, etc -->
+
+
+
+
+
+
+
 
 # Distribución multivariante
 
