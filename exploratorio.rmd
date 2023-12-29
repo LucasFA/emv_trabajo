@@ -104,13 +104,14 @@ freq(data$nombre_columna)
 freq(data$nombre_columna)
 
 ```
-
+<!-- apartado d  -->
 ## Outliers
-  ```{r warning=FALSE, message=FALSE}
-boxplot(data[-1], main = "Outliers", # -1 quita la última variable. Quitar la que 
+```{r warning=FALSE, message=FALSE}
+vars <- data # TODO: quitar las variables no explicativas (si las hay)
+boxplot(vars, main = "Outliers",
         xlab = "Variables explicativas",
         ylab = "Valor",
-        col = c(1:2)) # numero de columnas!
+        col = c(1:ncol(vars)) # numero de columnas!
 
 ```
 
