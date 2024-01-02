@@ -64,23 +64,24 @@ Esquema del trabajo de ejemplo de Prado:
 # Introducción
 
 
-# Lectura de datos
-
+# Preprocesado
+## Lectura de los datos
 ```{r}
 # data <- read.csv()
 data <- data.frame(list(c(1, 2, 3, 4), c(4, 3, 2, 1)))
 ```
 
-
-# Análisis exploratorio univariante
+## Descripción de los datos
 Las variables del conjunto de datos son:
 - Esto
 - Aquello
+- Cosa interesante
 
 <!-- Apartado b -->
-## Valores faltantes
+## Valores perdidos
 <!-- b.i) -->
-Porcentaje de datos faltantes:
+Porcentaje de datos faltantes por columnas:
+<!-- Es en cada columna? TODO: -->
 ```{r}
 colMeans(is.na(data)) * 100
 ```
@@ -98,12 +99,12 @@ colMeans(is.na(data)) * 100
 colnames(data)
 
 head(data)
+summary(data)
 
-freq(data$nombre_columna)
-freq(data$nombre_columna)
-freq(data$nombre_columna)
-freq(data$nombre_columna)
-
+# freq(data$nombre_columna)
+# freq(data$nombre_columna)
+# freq(data$nombre_columna)
+# freq(data$nombre_columna)
 ```
 <!-- apartado d  -->
 ## Outliers
@@ -114,13 +115,14 @@ boxplot(vars,
         xlab = "Variables explicativas",
         ylab = "Valor",
         col = c(seq_len(ncol(vars))) # numero de columnas!
-
+        )
 ```
 
 
 ## Normalidad univariante
 <!-- qqplots para variables continuas, etc -->
 ```{r}
+datos <- data
 par(mfrow = c(2, 3))
 for (k in 2:4) {
   j0 <- names(datos)[k]
