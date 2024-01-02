@@ -68,7 +68,7 @@ Esquema del trabajo de ejemplo de Prado:
 ## Lectura de los datos
 ```{r}
 # data <- read.csv()
-data <- data.frame(list(c(1, 2, 3, 4), c(4, 3, 2, 1)))
+data <- data.frame(list(c(1, 2, 3, 4), c(4, 2, 1, 3), c(1,11,2, 4), c(33,3,5,3)))
 ```
 
 ## Descripción de los datos
@@ -124,26 +124,28 @@ boxplot(
 <!-- qqplots para variables continuas, etc -->
 ```{r}
 datos <- data
-par(mfrow = c(2, 3))
-for (k in 2:4) {
-  j0 <- names(datos)[k]
-  x0 <- seq(min(datos[, k]), max(datos[, k]), le = 50)
-  for (i in 1:2) {
-    i0 <- levels(datos$especie)[i]
-    x <- datos[datos$especie == i0, j0]
-    qqnorm(x, main = paste("especie", i0, j0), pch = 19, col = i + 1)
-    qqline(x)
-  }
-}
+# par(mfrow = c(2, 3))
+# for (k in 2:4) {
+#   j0 <- names(datos)[k]
+#   x0 <- seq(min(datos[, k]), max(datos[, k]), le = 50)
+#   for (i in 1:2) {
+#     i0 <- levels(datos$respuesta)[i]
+#     x <- datos[datos$respuesta == i0, j0]
+#     qqnorm(x, main = paste("especie", i0, j0), pch = 19, col = i + 1)
+#     qqline(x)
+#   }
+# }
+
 # Ejemplo una variable:
-qqnorm(no_out_standard$insu,
-  main = "Insulin",
-  col = "cornflowerblue",
-  cex.lab = 1.2, cex.main = 1.5,
-  xlab = "Theoretical quantiles (normal distribution)",
-  ylab = "Empirical quantiles",
-)
-qqline(no_out_standard$insu, distribution = qnorm)
+
+# qqnorm(,
+#   main = "Insulin",
+#   col = "cornflowerblue",
+#   cex.lab = 1.2, cex.main = 1.5,
+#   xlab = "Theoretical quantiles (normal distribution)",
+#   ylab = "Empirical quantiles",
+# )
+# qqline(, distribution = qnorm)
 ```
 
 Test de hipótesis
@@ -159,7 +161,7 @@ shapiro.test(data[[2]])
 ## Correlación
 ```{r}
 library(psych)
-dataset_normalizado <- scale(dataset)
+dataset_normalizado <- scale(data)
 cortest.bartlett(cor(dataset_normalizado), n = nrow(dataset_normalizado))
 ```
 <!-- apartado 2b -->
@@ -233,7 +235,7 @@ fviz_pca_var(PCA,
 
 ```{r}
 fviz_pca_var(PCA,
-  axes = c(1, 3),
+  axes = c(1, 2), # TODO: probar con axes = c(1,3)
   repel = TRUE, col.var = "cos2",
   legend.title = "Distance"
 ) + theme_bw()
@@ -244,12 +246,13 @@ fviz_pca_var(PCA,
 ### Preconditions
 Visualizamos la matriz de correlaciones:
 ```{r}
-poly_cor <- polycor::hetcor(diab_no_output)$correlations
+data_no_output <- data
+poly_cor <- polycor::hetcor(data_no_output)$correlations
 ggcorrplot::ggcorrplot(poly_cor, type = "lower", hc.order = TRUE)
 ```
 
 ```{r}
-corrplot::corrplot(cor(diab_no_output), order = "hclust", tl.col = "black", tl.cex = 1)
+corrplot::corrplot(cor(data_no_output), order = "hclust", tl.col = "black", tl.cex = 1)
 ```
 
 Observamos algo? Algún número de factores?
@@ -260,17 +263,17 @@ Suponiendo 3 por ejemplo, tenemos:
 
 Modelo por máxima verosimilitud:
 ```{r}
-model1 <- fa(poly_cor,
-  nfactors = 3,
-  rotate = "none",
-  fm = "mle"
-)
+# model1 <- fa(poly_cor,
+#   nfactors = 2,
+#   rotate = "none",
+#   fm = "mle"
+# )
 ```
 
 Modelo por mínimos residuos:
 ```{r}
 model2 <- fa(poly_cor,
-  nfactors = 3,
+  nfactors = 2,
   rotate = "none",
   fm = "minres"
 )
@@ -296,7 +299,12 @@ Usaremos el scree plot y el análisis paralelo para asistirnos en la elección d
 
 ```{r }
 scree(poly_cor)
-fa.parallel(poly_cor, n.obs = length(diab_no_output[, 1]), fa = "fa", fm = "mle")
+# fa.parallel(
+#             poly_cor,
+#             n.obs = length(data_no_output)[, 1]),
+#             fa = "fa",
+#             fm = "mle"
+# )
 ```
 
 TODO: número de factores sugeridos?
@@ -313,21 +321,20 @@ fa.diagram(model1)
 Primero comprobamos si hay outliers multivariantes:
 TODO: data sería sin la variable explicada
 ```{r}
-outliers <- MVN::mvn(data = data, mvnTest = "hz", multivariateOutlierMethod = "quan")
+# outliers <- MVN::mvn(data = data, mvnTest = "hz", multivariateOutlierMethod = "quan")
 ```
 
 TODO: comentar algo
 ```{r}
-royston_test <- MVN::mvn(data = data, mvnTest = "royston", multivariatePlot = "qq")
+# royston_test <- MVN::mvn(data = data, mvnTest = "royston", multivariatePlot = "qq")
 
-royston_test$multivariateNormality
+# royston_test$multivariateNormality
 ```
 
-Likewise with the Henze-Zirkler test:
 TODO: data sería sin la variable explicada
 ```{r}
-hz_test <- MVN::mvn(data = data, mvnTest = "hz")
-hz_test$multivariateNormality
+# hz_test <- MVN::mvn(data = data, mvnTest = "hz")
+# hz_test$multivariateNormality
 ```
 
 
@@ -337,7 +344,8 @@ hz_test$multivariateNormality
 
 ```{r}
 pairs(
-  x = data[sample(nrow(data), 100), ],
+  x = data[sample(nrow(data), 100, replace = TRUE), ], 
+  # TODO: creo que sería sin replace = true, sino false
   col = c("green", "red")[data$class],
   pch = 19
 )
@@ -349,9 +357,10 @@ In the Bartlett test we saw that the data is not spherically distributed, but it
 
 ```{r}
 library(biotools)
-boxM(
-  data = data[1:7],
-  grouping = data[, 8] # variable explicada
-)
+# boxM(
+#   data = data[1:7],
+#   grouping = data[, 8] # variable explicada
+# )
 ```
+
 
