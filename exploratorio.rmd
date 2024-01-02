@@ -7,11 +7,12 @@ output:
     toc: true
     toc_depth: 2
     number_sections: false
+    keep_md: false
     toc_float: 
       collapsed: false
       smooth_scroll: false
   pdf_document:
-    keep_tex: true
+    keep_tex: false
 ---
 
 
@@ -67,7 +68,7 @@ Esquema del trabajo de ejemplo de Prado:
 
 ```{r}
 # data <- read.csv()
-
+data <- data.frame(list(c(1, 2, 3, 4), c(4, 3, 2, 1)))
 ```
 
 
@@ -108,10 +109,11 @@ freq(data$nombre_columna)
 ## Outliers
 ```{r warning=FALSE, message=FALSE}
 vars <- data # TODO: quitar las variables no explicativas (si las hay)
-boxplot(vars, main = "Outliers",
+boxplot(vars,
+        main = "Outliers",
         xlab = "Variables explicativas",
         ylab = "Valor",
-        col = c(1:ncol(vars)) # numero de columnas!
+        col = c(seq_len(ncol(vars))) # numero de columnas!
 
 ```
 
@@ -119,7 +121,7 @@ boxplot(vars, main = "Outliers",
 ## Normalidad univariante
 <!-- qqplots para variables continuas, etc -->
 ```{r}
-par(mfrow=c(2,3))
+par(mfrow = c(2, 3))
 for (k in 2:4) {
   j0 <- names(datos)[k]
   x0 <- seq(min(datos[, k]), max(datos[, k]), le = 50)
@@ -140,8 +142,6 @@ qqnorm(no_out_standard$insu,
 )
 qqline(no_out_standard$insu, distribution = qnorm)
 ```
-
-
 
 # Distribución multivariante
 
