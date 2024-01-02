@@ -146,34 +146,212 @@ qqnorm(no_out_standard$insu,
 qqline(no_out_standard$insu, distribution = qnorm)
 ```
 
-Test de hipotesis
+Test de hipótesis
 ```{r}
 shapiro.test(data[[1]])
 shapiro.test(data[[2]])
 # etc
 ```
 
-
-# Distribución multivariante
-
+<!-- apartado 2 -->
+# Análisis exploratorio multivariante
+<!-- apartado 2a -->
 ## Correlación
 ```{r}
 library(psych)
 dataset_normalizado <- scale(dataset)
 cortest.bartlett(cor(dataset_normalizado), n = nrow(dataset_normalizado))
 ```
+<!-- apartado 2b -->
 ## Outliers 
 (de nuevo. Se incluye o no dependiendo de como se haya tratado antes)
 
+<!-- apartado 2c -->
 ## Decisiones sobre NA (< 5 %)
 
-<!-- apartado d -->
+<!-- apartado 2d -->
 ## ACP
+### Viabilidad
+
+Blah blah por estas razones
+### Obtención de las componentes principales
+Usaremos la función `prcomp` del paquete `stats`.
+```{r}
+cosa_a_cambiar <- data
+PCA <- prcomp(cosa_a_cambiar, scale = TRUE, center = TRUE)
+```
+
+Dando como coeficientes:
+```{r}
+PCA$rotation
+```
+Visualizamos la fracción de la variance explicada por cada componente:
+```{r}
+plot(cumsum(PCA$sdev^2) / (sum(PCA$sdev^2)), type = "l",
+      col = "lightblue",
+      xlab = "Number of components", ylab = "Proportion of variance explained",
+      # xlim = c(1, 7), ylim = c(0, 1)
+)
+lines(PCA$sdev^2 / (sum(PCA$sdev^2)), type = "l", col = "red")
+```
+La línea roja es la proporción de varianza explicada por cada componente, mientras la azul es la varianza explicada cumulativa.
+<!-- The red line is the proportion of variance explained by each component, while the blue line represents the cumulative proportion of variance explained by the first $i$ components. -->
+
+En formato de tabla:
+```{r}
+summary(PCA)
+```
 
 ### Número de componentes principales
+Usaremos la función `fviz_screeplot` del paquete `factoextra`.
+
+```{r, results = FALSE, message=FALSE, warning=FALSE}
+library(factoextra)
+```
+
+#### Método del codo
+```{r}
+fviz_screeplot(PCA, addlabels = TRUE)
+```
+
+#### Método de la media de la varianza
+```{r}
+PCA$sdev
+mean(PCA$sdev^2)
+```
+
+TODO: interpretar y elegir número de componentes.
+
+### Visualización del ACP
+
+```{r}
+fviz_pca_var(PCA,
+  repel = TRUE, col.var = "cos2",
+  legend.title = "Distance"
+) + theme_bw()
+```
+
+```{r}
+fviz_pca_var(PCA,
+  axes = c(1, 3),
+  repel = TRUE, col.var = "cos2",
+  legend.title = "Distance"
+) + theme_bw()
+```
 
 <!-- apartado e -->
 ## AF
+### Preconditions
+Visualizamos la matriz de correlaciones:
+```{r}
+poly_cor <- polycor::hetcor(diab_no_output)$correlations
+ggcorrplot::ggcorrplot(poly_cor, type = "lower", hc.order = TRUE)
+```
+
+```{r}
+corrplot::corrplot(cor(diab_no_output), order = "hclust", tl.col = "black", tl.cex = 1)
+```
+
+Observamos algo? Algún número de factores?
+
+Suponiendo 3 por ejemplo, tenemos:
+
+### Modelos
+
+Modelo por máxima verosimilitud:
+```{r}
+model1 <- fa(poly_cor,
+  nfactors = 3,
+  rotate = "none",
+  fm = "mle"
+)
+```
+
+Modelo por mínimos residuos:
+```{r}
+model2 <- fa(poly_cor,
+  nfactors = 3,
+  rotate = "none",
+  fm = "minres"
+)
+```
+
+Obtenemos las comunalidades:
+```{r }
+c1 <- sort(model1$communality, decreasing = TRUE)
+c2 <- sort(model2$communality, decreasing = TRUE)
+cbind(c1, c2)
+```
+
+y las unicidades:
+```{r }
+u1 <- sort(model1$uniquenesses, decreasing = TRUE)
+u2 <- sort(model2$uniquenesses, decreasing = TRUE)
+cbind(u1, u2)
+```
 
 ### Número de factores
+
+Usaremos el scree plot y el análisis paralelo para asistirnos en la elección de factores.
+
+```{r }
+scree(poly_cor)
+fa.parallel(poly_cor, n.obs = length(diab_no_output[, 1]), fa = "fa", fm = "mle")
+```
+
+TODO: número de factores sugeridos?
+
+### Interpretación
+```{r}
+fa.diagram(model1)
+```
+
+<!-- Apartado f -->
+<!-- necesario para A discriminante -->
+## Normalidad multivariante
+
+Primero comprobamos si hay outliers multivariantes:
+TODO: data sería sin la variable explicada
+```{r}
+outliers <- MVN::mvn(data = data, mvnTest = "hz", multivariateOutlierMethod = "quan")
+```
+
+TODO: comentar algo
+```{r}
+royston_test <- MVN::mvn(data = data, mvnTest = "royston", multivariatePlot = "qq")
+
+royston_test$multivariateNormality
+```
+
+Likewise with the Henze-Zirkler test:
+TODO: data sería sin la variable explicada
+```{r}
+hz_test <- MVN::mvn(data = data, mvnTest = "hz")
+hz_test$multivariateNormality
+```
+
+
+<!-- Apartado g -->
+
+## Classifier
+
+```{r}
+pairs(
+  x = data[sample(nrow(data), 100), ],
+  col = c("green", "red")[data$class],
+  pch = 19
+)
+```
+
+#### Homogeneity of variance
+
+In the Bartlett test we saw that the data is not spherically distributed, but it is also the case that the variances are not homogeneous as can be determined form the boxM test:
+
+```{r}
+library(biotools)
+boxM(
+  data = data[1:7],
+  grouping = data[, 8] # variable explicada
+)
+```
 
