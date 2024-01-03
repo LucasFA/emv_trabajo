@@ -13,7 +13,8 @@ jobs:
         with:
           use-public-rspm: true
       - name: Install packages for R and pandoc
-        run: sudo apt update && sudo apt install r-cran-rmarkdown r-cran-psych pandoc
+        run: sudo apt update && sudo apt install r-cran-rmarkdown r-cran-psych
+      - uses: r-lib/actions/setup-pandoc@v2
       - uses: actions/checkout@v4
       - name: Render my document to html
         run: Rscript -e 'rmarkdown::render("exploratorio.rmd", output_format = "html_document")'
