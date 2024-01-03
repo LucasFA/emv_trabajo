@@ -13,7 +13,7 @@ jobs:
         with:
           use-public-rspm: true
       - name: Install packages for R
-        run: Rscript -e 'install.packages(c("rmarkdown", "psych"))'
+        run: Rscript -e 'install.packages(c("rmarkdown", "psych", "factoextra", "ggplot"))'
       - uses: r-lib/actions/setup-pandoc@v2
       - uses: actions/checkout@v4
       - name: Render my document to html
