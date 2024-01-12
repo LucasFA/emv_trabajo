@@ -74,41 +74,47 @@ data <- read.csv("./data/marketing_customer.csv",
 ```
 
 ## Descripción de los datos
-Esta es la descripción literal obtenida de Kaggle junto al conjunto de datos:
+Esta es la descripción literal obtenida de Kaggle junto al conjunto de datos, presentado en inglés,
+como originalmente
+
 Personas:
- - ID: Customer's unique identifier
- - Year_Birth: Customer's birth year
- - Education: Customer's education level
- - Marital_Status: Customer's marital status
- - Income: Customer's yearly household income
- - Kidhome: Number of children in customer's household
- - Teenhome: Number of teenagers in customer's household
- - Dt_Customer: Date of customer's enrollment with the company
- - Recency: Number of days since customer's last purchase
- - Complain: 1 if the customer complained in the last 2 years, 0 otherwise
+
+* ID: Customer's unique identifier
+* Year_Birth: Customer's birth year
+* Education: Customer's education level
+* Marital_Status: Customer's marital status
+* Income: Customer's yearly household income
+* Kidhome: Number of children in customer's household
+* Teenhome: Number of teenagers in customer's household
+* Dt_Customer: Date of customer's enrollment with the company
+* Recency: Number of days since customer's last purchase
+* Complain: 1 if the customer complained in the last 2 years, 0 otherwise
 
 Productos:
- - MntWines: Amount spent on wine in last 2 years
- - MntFruits: Amount spent on fruits in last 2 years
- - MntMeatProducts: Amount spent on meat in last 2 years
- - MntFishProducts: Amount spent on fish in last 2 years
- - MntSweetProducts: Amount spent on sweets in last 2 years
- - MntGoldProds: Amount spent on gold in last 2 years
+
+* MntWines: Amount spent on wine in last 2 years
+* MntFruits: Amount spent on fruits in last 2 years
+* MntMeatProducts: Amount spent on meat in last 2 years
+* MntFishProducts: Amount spent on fish in last 2 years
+* MntSweetProducts: Amount spent on sweets in last 2 years
+* MntGoldProds: Amount spent on gold in last 2 years
 
 Promociones
- - NumDealsPurchases: Number of purchases made with a discount
- - AcceptedCmp1: 1 if customer accepted the offer in the 1st campaign, 0 otherwise
- - AcceptedCmp2: 1 if customer accepted the offer in the 2nd campaign, 0 otherwise
- - AcceptedCmp3: 1 if customer accepted the offer in the 3rd campaign, 0 otherwise
- - AcceptedCmp4: 1 if customer accepted the offer in the 4th campaign, 0 otherwise
- - AcceptedCmp5: 1 if customer accepted the offer in the 5th campaign, 0 otherwise
- - Response: 1 if customer accepted the offer in the last campaign, 0 otherwise
+
+* NumDealsPurchases: Number of purchases made with a discount
+* AcceptedCmp1: 1 if customer accepted the offer in the 1st campaign, 0 otherwise
+* AcceptedCmp2: 1 if customer accepted the offer in the 2nd campaign, 0 otherwise
+* AcceptedCmp3: 1 if customer accepted the offer in the 3rd campaign, 0 otherwise
+* AcceptedCmp4: 1 if customer accepted the offer in the 4th campaign, 0 otherwise
+* AcceptedCmp5: 1 if customer accepted the offer in the 5th campaign, 0 otherwise
+* Response: 1 if customer accepted the offer in the last campaign, 0 otherwise
 
 Lugar de transacción (online, catálogo, tienda física)
- - NumWebPurchases: Number of purchases made through the company’s website
- - NumCatalogPurchases: Number of purchases made using a catalogue
- - NumStorePurchases: Number of purchases made directly in stores
- - NumWebVisitsMonth: Number of visits to company’s website in the last month
+
+* NumWebPurchases: Number of purchases made through the company’s website
+* NumCatalogPurchases: Number of purchases made using a catalogue
+* NumStorePurchases: Number of purchases made directly in stores
+* NumWebVisitsMonth: Number of visits to company’s website in the last month
 
 Objetivo
 
@@ -119,8 +125,6 @@ Aplicar clustering para segmentar a la clientela.
 ```{r warning=FALSE }
 str(data)
 colnames(data)
-
-head(data)
 summary(data)
 ```
 
@@ -130,7 +134,6 @@ De acuerdo a lo anterior, ya vamos a eliminar ciertas columnas del conjunto de d
 
 ```{r}
 data <- data[, -which(names(data) %in% c("ID", "Dt_Customer"))]
-str(data)
 ```
 
 <!-- Apartado b -->
@@ -142,23 +145,15 @@ Porcentaje de datos faltantes por columnas:
 colMeans(is.na(data)) * 100
 ```
 
+Una única variable presenta datos faltantes, en aproximadamente el 1% de casos. Omitiremos todos estos casos.
+
+```{r}
+data <- na.omit(data)
+```
+
 <!-- Si más del 5%, analizar si es completely at random: -->
-<!-- Para ello, estudiar la homogeneidad según grupos (NA y no -->
-<!-- NA) con otras variables. Si son continuas, con un test de student, si son cualitativas o -->
-<!-- discretas con test de independencia Chi-cuadrado, etc. -->
-<!-- (Investigar funciones para el contraste de medias como t.test(), etc. del lenguaje R.) -->
 
-
-<!-- print_factor_frequency <- function(column) { -->
-<!--   if (is.factor(column)) { -->
-<!--     cat("Frequency for", names(data)[which(data == column)], ":\n") -->
-<!--     print(table(column)) -->
-<!--     cat("\n") -->
-<!--   } -->
-<!-- } -->
-<!---->
 <!-- lapply(df, print_factor_frequency) -->
-<!---->
 <!-- lapply(data, is.factor) -->
 <!-- for (col in data) { -->
 <!--   if (is.factor(data$col)) { -->
@@ -172,14 +167,13 @@ colMeans(is.na(data)) * 100
 ## Outliers
 ```{r warning=FALSE, message=FALSE}
 var_numericas <- data[, sapply(data, is.numeric)]
-normalizadas <- data.frame(scale(var_numericas))
-# str(var_numericas)
+data_normalizado <- data.frame(scale(var_numericas))
 boxplot(
-  normalizadas,
+  data_normalizado,
+  col = c(seq_len(ncol(data_normalizado))),
   main = "Outliers",
   xlab = "Variables explicativas",
-  ylab = "Valor",
-  col = c(seq_len(ncol(normalizadas))) # numero de columnas!
+  ylab = "Valor"
 )
 ```
 
@@ -189,8 +183,9 @@ TODO: eliminar todos los outliers y ya
 <!-- Apartado 1e) -->
 ## Normalidad univariante
 <!-- qqplots para variables continuas, etc -->
+
 ```{r}
-# datos <- data
+# datos <- data_normalizado
 # par(mfrow = c(2, 3))
 # for (k in 2:4) {
 #   j0 <- names(datos)[k]
@@ -202,10 +197,12 @@ TODO: eliminar todos los outliers y ya
 #     qqline(x)
 #   }
 # }
+```
 
+```{r}
 # Ejemplo una variable:
-str(normalizadas)
-colnames(normalizadas)
+str(data_normalizado)
+colnames(data_normalizado)
 # for (colname in colnames(normalizadas)) {
 #   qqnorm(
 #     y = normalizadas$colname,
