@@ -67,6 +67,7 @@ Esquema del trabajo de ejemplo de Prado:
 # Preprocesado
 ## Lectura de los datos
 ```{r}
+set.seed(314)
 data <- read.csv("./data/marketing_customer.csv",
   sep = "\t",
   stringsAsFactors = TRUE
@@ -297,6 +298,7 @@ for (colname in colnames(var_numericas_normalizado)) {
   print(shapiro.test(data[, colname]))
 }
 ```
+
 Las variables son claramente no normales.
 
 <!-- apartado 2 -->
@@ -305,50 +307,50 @@ Las variables son claramente no normales.
 ## Correlación
 ```{r}
 library(psych)
-cortest.bartlett(cor(var_numericas_normalizado),
-                 n = nrow(var_numericas_normalizado)
-)
+cortest.bartlett(cor(var_numericas_normalizado), n = nrow(var_numericas_normalizado))
 ```
 
 Naturalmente, teniendo que las distribuciones univariantes son no normales, la multivariante tampoco lo iba a ser.
 <!-- apartado 2b -->
 ## Outliers 
+<!-- TODO: todavía -->
 (de nuevo. Se incluye o no dependiendo de como se haya tratado antes)
 
 <!-- apartado 2c -->
-## Decisiones sobre NA (< 5 %)
+<!-- ## Decisiones sobre NA (< 5 %) -->
 
 <!-- apartado 2d -->
 ## ACP
+
 ### Viabilidad
 
-Blah blah por estas razones
 ### Obtención de las componentes principales
 Usaremos la función `prcomp` del paquete `stats`.
 ```{r}
-cosa_a_cambiar <- data
-# PCA <- prcomp(cosa_a_cambiar, scale = TRUE, center = TRUE)
+PCA <- prcomp(var_numericas_normalizado)
 ```
 
 Dando como coeficientes:
 ```{r}
-# PCA$rotation
+PCA$rotation
 ```
 Visualizamos la fracción de la variance explicada por cada componente:
 ```{r}
-# plot(cumsum(PCA$sdev^2) / (sum(PCA$sdev^2)), type = "l",
-#       col = "lightblue",
-#       xlab = "Number of components", ylab = "Proportion of variance explained",
-#       # xlim = c(1, 7), ylim = c(0, 1)
-# )
-# lines(PCA$sdev^2 / (sum(PCA$sdev^2)), type = "l", col = "red")
+plot(cumsum(PCA$sdev^2) / (sum(PCA$sdev^2)),
+  type = "l",
+  col = "blue",
+  xlab = "Número de componentes", ylab = "Proporción de la varianza explicada",
+  xlim = c(1, 7), ylim = c(0, 1)
+)
+lines(PCA$sdev^2 / (sum(PCA$sdev^2)), type = "l", col = "red")
 ```
+
 La línea roja es la proporción de varianza explicada por cada componente, mientras la azul es la varianza explicada cumulativa.
-<!-- The red line is the proportion of variance explained by each component, while the blue line represents the cumulative proportion of variance explained by the first $i$ components. -->
+Ya podemos ver que no vamos a necesitar más de 2 componentes
 
 En formato de tabla:
 ```{r}
-# summary(PCA)
+summary(PCA)
 ```
 
 ### Número de componentes principales
@@ -360,84 +362,76 @@ library(factoextra)
 
 #### Método del codo
 ```{r}
-# fviz_screeplot(PCA, addlabels = TRUE)
+fviz_screeplot(PCA, addlabels = TRUE)
 ```
 
 #### Método de la media de la varianza
 ```{r}
-# PCA$sdev
-# mean(PCA$sdev^2)
+PCA$sdev
+mean(PCA$sdev^2)
 ```
 
-TODO: interpretar y elegir número de componentes.
+Aunque una sola componente ya explica la mayoría de la varianza y la segunda componente principal sólo mejora la situación en un 10%, tomamos dos componentes.
 
 ### Visualización del ACP
 
 ```{r}
-# fviz_pca_var(PCA,
-#   repel = TRUE, col.var = "cos2",
-#   legend.title = "Distance"
-# ) + theme_bw()
+fviz_pca_var(PCA,
+  axes = c(1, 2),
+  repel = TRUE, col.var = "cos2",
+  legend.title = "Distance"
+) + theme_bw()
 ```
 
-```{r}
-# fviz_pca_var(PCA,
-#   axes = c(1, 2), # TODO: probar con axes = c(1,3)
-#   repel = TRUE, col.var = "cos2",
-#   legend.title = "Distance"
-# ) + theme_bw()
-```
+En esta gráfica apreciamos cómo las variables MntFruits, MntFishProducts, MntSweetProducts tienen una alta similaridad.
 
 <!-- apartado e -->
 ## AF
 ### Preconditions
 Visualizamos la matriz de correlaciones:
 ```{r}
-data_no_output <- data
-# poly_cor <- polycor::hetcor(data_no_output)$correlations
-# ggcorrplot::ggcorrplot(poly_cor, type = "lower", hc.order = TRUE)
+poly_cor <- polycor::hetcor(var_numericas_normalizado)$correlations
+ggcorrplot::ggcorrplot(poly_cor, type = "lower", hc.order = TRUE)
 ```
 
 ```{r}
-# corrplot::corrplot(cor(data_no_output), order = "hclust", tl.col = "black", tl.cex = 1)
+corrplot::corrplot(cor(var_numericas_normalizado), order = "hclust", tl.col = "black", tl.cex = 1)
 ```
 
-Observamos algo? Algún número de factores?
+En estas gráficas también apreciamos la alta correlación entre las variables relacionadas con las compras. Por otro lado, el número de visitas a la web está negativamente relacionada con las compras. Esto no es una relación causal, naturalmente.
 
-Suponiendo 3 por ejemplo, tenemos:
+Las variables previamente mencionadas las vemos de nuevo altamente agrupadas, junto a, también, el número de compras por catálogo.
 
 ### Modelos
 
-Modelo por máxima verosimilitud:
 ```{r}
-# model1 <- fa(poly_cor,
-#   nfactors = 2,
-#   rotate = "none",
-#   fm = "mle"
-# )
+modelo1 <- fa(poly_cor,
+  nfactors = 2,
+  rotate = "varimax",
+  fm = "mle"
+)
 ```
 
-Modelo por mínimos residuos:
 ```{r}
-# model2 <- fa(poly_cor,
-#   nfactors = 2,
-#   rotate = "none",
-#   fm = "minres"
-# )
+modelo2 <- fa(poly_cor,
+  nfactors = 4,
+  rotate = "varimax",
+  fm = "mle"
+)
 ```
 
 Obtenemos las comunalidades:
 ```{r }
-# c1 <- sort(model1$communality, decreasing = TRUE)
-# c2 <- sort(model2$communality, decreasing = TRUE)
-# cbind(c1, c2)
+c1 <- sort(modelo1$communality, decreasing = TRUE)
+c2 <- sort(modelo2$communality, decreasing = TRUE)
+cbind(c1, c2)
 ```
 
 y las unicidades:
 ```{r }
-# u1 <- sort(model1$uniquenesses, decreasing = TRUE)
-# u2 <- sort(model2$uniquenesses, decreasing = TRUE)
-# cbind(u1, u2)
+u1 <- sort(modelo1$uniquenesses, decreasing = TRUE)
+u2 <- sort(modelo2$uniquenesses, decreasing = TRUE)
+cbind(u1, u2)
 ```
 
 ### Número de factores
@@ -445,21 +439,25 @@ y las unicidades:
 Usaremos el scree plot y el análisis paralelo para asistirnos en la elección de factores.
 
 ```{r }
-# scree(poly_cor)
-# fa.parallel(
-#             poly_cor,
-#             n.obs = length(data_no_output)[, 1]),
-#             fa = "fa",
-#             fm = "mle"
-# )
+scree(poly_cor)
+fa.parallel(
+  poly_cor,
+  n.obs = length(var_numericas_normalizado[, 1]),
+  fa = "fa",
+  fm = "mle"
+)
 ```
 
-TODO: número de factores sugeridos?
+Estos últimos métodos sugieren entre 2 y 4 factores
+
 
 ### Interpretación
 ```{r}
-# fa.diagram(model1)
+fa.diagram(modelo1)
+fa.diagram(modelo2)
 ```
+
+Atendiendo al segundo modelo, vemos que agrupa variables razonablemente conectadas.
 
 <!-- Apartado f -->
 <!-- necesario para A discriminante -->
@@ -468,20 +466,20 @@ TODO: número de factores sugeridos?
 Primero comprobamos si hay outliers multivariantes:
 TODO: data sería sin la variable explicada
 ```{r}
-# outliers <- MVN::mvn(data = data, mvnTest = "hz", multivariateOutlierMethod = "quan")
+outliers <- MVN::mvn(data = var_numericas_normalizado[sample(nrow(var_numericas_normalizado), 1000), ], mvnTest = "hz", multivariateOutlierMethod = "quan")
 ```
 
 TODO: comentar algo
 ```{r}
-# royston_test <- MVN::mvn(data = data, mvnTest = "royston", multivariatePlot = "qq")
+royston_test <- MVN::mvn(data = var_numericas_normalizado[sample(nrow(var_numericas_normalizado), 1000), ], mvnTest = "royston", multivariatePlot = "qq")
 
-# royston_test$multivariateNormality
+royston_test$multivariateNormality
 ```
 
 TODO: data sería sin la variable explicada
 ```{r}
-# hz_test <- MVN::mvn(data = data, mvnTest = "hz")
-# hz_test$multivariateNormality
+hz_test <- MVN::mvn(data = data, mvnTest = "hz")
+hz_test$multivariateNormality
 ```
 
 
