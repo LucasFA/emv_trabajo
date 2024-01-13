@@ -130,10 +130,10 @@ summary(data)
 
 ## Procesado
 
-De acuerdo a lo anterior, ya vamos a eliminar ciertas columnas del conjunto de datos
+De acuerdo a lo anterior, ya vamos a eliminar ciertas columnas del conjunto de datos. En el caso de la fecha, por complicar el tratamiento de los datos. El ID, por ser irrelevante, mientras Z_CostContact y Z_Revenue son ambas constantes: en el summary sus valores máximos y mínimos son iguales.
 
 ```{r}
-data <- data[, -which(names(data) %in% c("ID", "Dt_Customer"))]
+data <- data[, -which(names(data) %in% c("ID", "Dt_Customer", "Z_CostContact", "Z_Revenue"))]
 ```
 
 <!-- Apartado b -->
@@ -145,10 +145,62 @@ Porcentaje de datos faltantes por columnas:
 colMeans(is.na(data)) * 100
 ```
 
-Una única variable presenta datos faltantes, en aproximadamente el 1% de casos. Omitiremos todos estos casos.
+Una única variable (income) presenta datos faltantes, en aproximadamente el 1% de casos. Omitiremos todos estos casos.
 
 ```{r}
 data <- na.omit(data)
+```
+
+Vamos a determinar la naturaleza de las últimas columnas de la tabla
+
+```{r}
+for (idx in 17:23) {
+  cat("Frecuencia de:", colnames(data)[idx], ", columna ", idx)
+  print(table(data[, idx]))
+  cat("\n")
+}
+```
+
+Observamos que las columnas AcceptedCmp* tienen únicamente valores 0 o 1, correspondiente a si aceptan la oferta o no. Las vamos a codificar sumándolas y eliminándolas
+
+```{r}
+data$sumaAcceptedCmp <-
+  data[, "AcceptedCmp1"] +
+  data[, "AcceptedCmp2"] +
+  data[, "AcceptedCmp3"] +
+  data[, "AcceptedCmp4"] +
+  data[, "AcceptedCmp5"]
+
+
+data[, "AcceptedCmp1"] <- NULL
+data[, "AcceptedCmp2"] <- NULL
+data[, "AcceptedCmp3"] <- NULL
+data[, "AcceptedCmp4"] <- NULL
+data[, "AcceptedCmp5"] <- NULL
+```
+
+También vamos a sumar el número de hijos, niños y adolescentes, en el hogar:
+
+```{r}
+data$sumaHijos <- data$Kidhome + data$Teenhome
+data$Kidhome <- NULL
+data$Teenhome <- NULL
+```
+
+También vamos a eliminar el año de nacimiento
+```{r}
+data$Year_Birth <- NULL
+```
+
+Con lo cual nos queda el siguiente conjunto de variables
+```{r}
+data_explicativas <- subset(data, select = -c(Complain, Response, sumaAcceptedCmp))
+str(data_explicativas)
+var_no_numericas <- data[, !sapply(data, is.numeric)]
+var_numericas <- data[, sapply(data, is.numeric)]
+var_categoricas <- data.frame(var_numericas)[, 14:17]
+var_numericas_normalizado <- data.frame(scale(var_numericas, center = FALSE))[, 1:13]
+print(length(var_numericas_normalizado))
 ```
 
 <!-- Si más del 5%, analizar si es completely at random: -->
@@ -166,62 +218,86 @@ data <- na.omit(data)
 <!-- apartado d  -->
 ## Outliers
 ```{r warning=FALSE, message=FALSE}
-var_numericas <- data[, sapply(data, is.numeric)]
-data_normalizado <- data.frame(scale(var_numericas))
 boxplot(
-  data_normalizado,
-  col = c(seq_len(ncol(data_normalizado))),
+  var_numericas_normalizado,
+  col = c(seq_len(ncol(var_numericas_normalizado))),
   main = "Outliers",
   xlab = "Variables explicativas",
   ylab = "Valor"
 )
 ```
 
-TODO: estudiar cada una
-TODO: eliminar todos los outliers y ya
+El resto de variables, por otro lado, son variables discretas, con lo que tienen muchos outliers.
+
+```{r}
+boxplot(
+  var_categoricas,
+  col = c(seq_len(ncol(var_categoricas))),
+  main = "Outliers",
+  xlab = "Variables explicativas",
+  ylab = "Valor"
+)
+
+for (idx in seq_along(var_categoricas)) {
+  cat("Frecuencia relativa de:", colnames(var_categoricas)[idx], ", columna ", idx)
+  print(table(var_categoricas[, idx]) / length(var_categoricas[, idx]))
+  cat("\n")
+}
+```
+
+<!-- TODO: estudiar cada una -->
+<!-- TODO: eliminar todos los outliers y ya -->
 
 <!-- Apartado 1e) -->
 ## Normalidad univariante
 <!-- qqplots para variables continuas, etc -->
 
+Para comprobar la normalidad univariante he tomado varias transformaciones de los datos. 
 ```{r}
-# datos <- data_normalizado
-# par(mfrow = c(2, 3))
-# for (k in 2:4) {
-#   j0 <- names(datos)[k]
-#   x0 <- seq(min(datos[, k]), max(datos[, k]), le = 50)
-#   for (i in 1:2) {
-#     i0 <- levels(datos$respuesta)[i]
-#     x <- datos[datos$respuesta == i0, j0]
-#     qqnorm(x, main = paste("especie", i0, j0), pch = 19, col = i + 1)
-#     qqline(x)
-#   }
+# rango <- seq(min(df[, idx]), max(df[, idx]), le = 50)
+# for (i in 1:2) {
+# i0 <- levels(datos$respuesta)[i]
+# x <- datos[datos$respuesta == i0, nombre]
 # }
+pipeline <- function(transformation) {
+  df <- var_numericas_normalizado
+  for (idx in seq_along(df)) {
+    nombre <- names(df)[idx]
+    qqnorm(sqrt(var_numericas_normalizado[, idx]), main = paste("Variable", nombre), pch = 19, col = idx + 1)
+    qqline(sqrt(var_numericas_normalizado[, idx]))
+  }
+}
+
+par(mfrow = c(2, 2))
+pipeline(identity)
+# pipeline(log)
+# pipeline(sqrt)
+# TODO: descomentar
 ```
 
-```{r}
-# Ejemplo una variable:
-str(data_normalizado)
-colnames(data_normalizado)
-# for (colname in colnames(normalizadas)) {
-#   qqnorm(
-#     y = normalizadas$colname,
-#     main = c("Distribución de", colname),
-#     col = "cornflowerblue",
-#     cex.lab = 1.2, cex.main = 1.5,
-#     xlab = "Cuantiles teóricos (distribución normal)",
-#     ylab = "Cuantiles empíricos"
-#   )
-#   qqline(normalizadas$colname, distribution = qnorm)
-# }
-```
-
+A primera vista no observamos ninguna mejora transformando las variables, con lo cual las dejamos en su estado original.
+<!---->
+<!-- ```{r} -->
+<!-- for (colname in colnames(var_numericas_normalizado)) { -->
+<!--   qqnorm( -->
+<!--     y = var_numericas_normalizado[, colname], -->
+<!--     main = c("Distribución de", colname), -->
+<!--     col = "cornflowerblue", -->
+<!--     cex.lab = 1.2, cex.main = 1.5, -->
+<!--     xlab = "Cuantiles teóricos (distribución normal)", -->
+<!--     ylab = "Cuantiles empíricos" -->
+<!--   ) -->
+<!--   qqline(var_numericas_normalizado[, colname], distribution = qnorm) -->
+<!-- } -->
+<!-- ``` -->
+<!---->
 Test de hipótesis
 ```{r}
-# shapiro.test(data[[1]])
-# shapiro.test(data[[2]])
-# etc
+for (colname in colnames(var_numericas_normalizado)) {
+  print(shapiro.test(data[, colname]))
+}
 ```
+Las variables son claramente no normales.
 
 <!-- apartado 2 -->
 # Análisis exploratorio multivariante
@@ -229,9 +305,12 @@ Test de hipótesis
 ## Correlación
 ```{r}
 library(psych)
-# dataset_normalizado <- scale(data)
-# cortest.bartlett(cor(dataset_normalizado), n = nrow(dataset_normalizado))
+cortest.bartlett(cor(var_numericas_normalizado),
+                 n = nrow(var_numericas_normalizado)
+)
 ```
+
+Naturalmente, teniendo que las distribuciones univariantes son no normales, la multivariante tampoco lo iba a ser.
 <!-- apartado 2b -->
 ## Outliers 
 (de nuevo. Se incluye o no dependiendo de como se haya tratado antes)
@@ -430,5 +509,4 @@ library(biotools)
 #   grouping = data[, 8] # variable explicada
 # )
 ```
-
 
