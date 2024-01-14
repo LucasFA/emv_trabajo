@@ -478,14 +478,15 @@ royston_test$multivariateNormality
 
 TODO: data sería sin la variable explicada
 ```{r}
-hz_test <- MVN::mvn(data = data, mvnTest = "hz")
+hz_test <- MVN::mvn(data = var_numericas_normalizado, mvnTest = "hz")
 hz_test$multivariateNormality
 ```
 
+Sabiendo que la distribución no es en absoluto normal, procedemos a intentar crear un clasificador en el conjunto de datos a pesar de ello.
 
 <!-- Apartado g -->
 
-## Classifier
+## Clasificación
 
 ```{r}
 # pairs(
@@ -495,8 +496,7 @@ hz_test$multivariateNormality
 #   pch = 19
 # )
 ```
-
-#### Homogeneity of variance
+### Homogeneidad de la varianza
 
 In the Bartlett test we saw that the data is not spherically distributed, but it is also the case that the variances are not homogeneous as can be determined form the boxM test:
 
