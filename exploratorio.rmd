@@ -57,11 +57,8 @@ Esquema del trabajo de ejemplo de Prado:
 -->
 
 
-# Abstract 
-<!-- Opcional, supongo -->
-
-
-# Introducción
+<!-- # Introducción, escrita directamente -->
+Para este análisis hemos obtenido desde esta [página de Kaggle](https://www.kaggle.com/datasets/imakash3011/customer-personality-analysis/data) un dataset de análisis de la personalidad de clientes. Empezaremos con un análisis exploratorio, seguido de análisis de componentes principales y factorial. Finalmente acabamos creando un modelo de clasificación utilizando tanto un modelo lineal como cuadrático.
 
 
 # Preprocesado
@@ -253,19 +250,22 @@ for (idx in seq_along(var_categoricas)) {
 Vamos a eliminar los outliers más extremos de las variables numéricas con la siguiente función:
 
 ```{r}
-outlier<-function(data,na.rm=T){
-  H<-1.5*IQR(data)
+outlier <- function(data) {
+  H <-1.5*IQR(data)
   data[data<quantile(data,0.25,na.rm = T)-H]<-NA
   data[data>quantile(data,0.75, na.rm = T)+H]<-NA
   data[is.na(data)]<-mean(data, na.rm = T)
   H<-1.5*IQR(data)
 
-  if (TRUE %in% (data<quantile(data,0.25,na.rm = T)-H) ||
-      TRUE %in% (data>quantile(data,0.75,na.rm = T)+H))
+  if ( any(
+           (data < quantile(data,0.25,na.rm = T)-H) |
+           (data > quantile(data,0.75,na.rm = T)+H)))
     outlier(data)
   else
     return(data)
 }
+
+var_numericas_normalizado <- as.data.frame(lapply(var_numericas_normalizado, outlier))
 ```
 <!-- TODO: estudiar cada una -->
 <!-- TODO: eliminar todos los outliers y ya -->
@@ -275,25 +275,18 @@ outlier<-function(data,na.rm=T){
 <!-- qqplots para variables continuas, etc -->
 
 Para comprobar la normalidad univariante he tomado varias transformaciones de los datos. 
-<!-- # rango <- seq(min(df[, idx]), max(df[, idx]), le = 50) -->
-<!-- # for (i in 1:2) { -->
-<!-- # i0 <- levels(datos$respuesta)[i] -->
-<!-- # x <- datos[datos$respuesta == i0, nombre] -->
-<!-- # } -->
 
 ```{r}
 pipeline <- function(transformation) {
   df <- var_numericas_normalizado
-  for (idx in seq_along(df)) {
-    nombre <- names(df)[idx]
-    qqnorm(transformation(var_numericas_normalizado[, idx]), main = paste("Variable", nombre), pch = 19, col = idx + 1)
-    qqline(transformation(var_numericas_normalizado[, idx]))
+  for (colname in colnames(df)) {
+    qqnorm(transformation(var_numericas_normalizado[, colname]), main = paste("Variable", colname), pch = 19, col = idx + 1)
+    qqline(transformation(var_numericas_normalizado[, colname]))
   }
 }
 
 par(mfrow = c(2, 2))
 pipeline(identity)
-pipeline(sqrt)
 ```
 
 A primera vista no observamos ninguna mejora transformando las variables, con lo cual las dejamos en su estado original.
@@ -316,7 +309,7 @@ library(psych)
 cortest.bartlett(cor(var_numericas_normalizado), n = nrow(var_numericas_normalizado))
 ```
 
-Naturalmente, teniendo que las distribuciones univariantes son no normales, la multivariante tampoco lo iba a ser.
+Efectivamente tenemos que las variables no son independientes 
 
 <!-- apartado 2b -->
 ## Outliers 
