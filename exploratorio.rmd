@@ -149,7 +149,7 @@ colMeans(is.na(data)) * 100
 Una única variable (income) presenta datos faltantes, en aproximadamente el 1% de casos. Omitiremos todos estos casos.
 
 ```{r}
-data <- na.omit(data)
+data <- data[complete.cases(data), ]
 ```
 
 Vamos a determinar la naturaleza de las últimas columnas de la tabla
@@ -197,11 +197,15 @@ Con lo cual nos queda el siguiente conjunto de variables
 ```{r}
 data_explicativas <- subset(data, select = -c(Complain, Response, sumaAcceptedCmp))
 str(data_explicativas)
+
 var_no_numericas <- data[, !sapply(data, is.numeric)]
 var_numericas <- data[, sapply(data, is.numeric)]
+
 var_categoricas <- data.frame(var_numericas)[, 14:17]
-var_numericas_normalizado <- data.frame(scale(var_numericas, center = FALSE))[, 1:13]
-print(length(var_numericas_normalizado))
+str(var_categoricas)
+
+var_numericas_normalizado <- data.frame(scale(var_numericas))[, 1:13]
+str(var_numericas_normalizado)
 ```
 
 <!-- Si más del 5%, analizar si es completely at random: -->
@@ -254,45 +258,30 @@ for (idx in seq_along(var_categoricas)) {
 <!-- qqplots para variables continuas, etc -->
 
 Para comprobar la normalidad univariante he tomado varias transformaciones de los datos. 
+<!-- # rango <- seq(min(df[, idx]), max(df[, idx]), le = 50) -->
+<!-- # for (i in 1:2) { -->
+<!-- # i0 <- levels(datos$respuesta)[i] -->
+<!-- # x <- datos[datos$respuesta == i0, nombre] -->
+<!-- # } -->
+
 ```{r}
-# rango <- seq(min(df[, idx]), max(df[, idx]), le = 50)
-# for (i in 1:2) {
-# i0 <- levels(datos$respuesta)[i]
-# x <- datos[datos$respuesta == i0, nombre]
-# }
 pipeline <- function(transformation) {
   df <- var_numericas_normalizado
   for (idx in seq_along(df)) {
     nombre <- names(df)[idx]
-    qqnorm(sqrt(var_numericas_normalizado[, idx]), main = paste("Variable", nombre), pch = 19, col = idx + 1)
-    qqline(sqrt(var_numericas_normalizado[, idx]))
+    qqnorm(transformation(var_numericas_normalizado[, idx]), main = paste("Variable", nombre), pch = 19, col = idx + 1)
+    qqline(transformation(var_numericas_normalizado[, idx]))
   }
 }
 
 par(mfrow = c(2, 2))
 pipeline(identity)
-# pipeline(log)
-# pipeline(sqrt)
-# TODO: descomentar
+pipeline(sqrt)
 ```
 
 A primera vista no observamos ninguna mejora transformando las variables, con lo cual las dejamos en su estado original.
-<!---->
-<!-- ```{r} -->
-<!-- for (colname in colnames(var_numericas_normalizado)) { -->
-<!--   qqnorm( -->
-<!--     y = var_numericas_normalizado[, colname], -->
-<!--     main = c("Distribución de", colname), -->
-<!--     col = "cornflowerblue", -->
-<!--     cex.lab = 1.2, cex.main = 1.5, -->
-<!--     xlab = "Cuantiles teóricos (distribución normal)", -->
-<!--     ylab = "Cuantiles empíricos" -->
-<!--   ) -->
-<!--   qqline(var_numericas_normalizado[, colname], distribution = qnorm) -->
-<!-- } -->
-<!-- ``` -->
-<!---->
-Test de hipótesis
+
+Test de hipótesis:
 ```{r}
 for (colname in colnames(var_numericas_normalizado)) {
   print(shapiro.test(data[, colname]))
@@ -311,6 +300,7 @@ cortest.bartlett(cor(var_numericas_normalizado), n = nrow(var_numericas_normaliz
 ```
 
 Naturalmente, teniendo que las distribuciones univariantes son no normales, la multivariante tampoco lo iba a ser.
+
 <!-- apartado 2b -->
 ## Outliers 
 <!-- TODO: todavía -->
@@ -320,11 +310,11 @@ Naturalmente, teniendo que las distribuciones univariantes son no normales, la m
 <!-- ## Decisiones sobre NA (< 5 %) -->
 
 <!-- apartado 2d -->
-## ACP
+# ACP
 
-### Viabilidad
+## Viabilidad
 
-### Obtención de las componentes principales
+## Obtención de las componentes principales
 Usaremos la función `prcomp` del paquete `stats`.
 ```{r}
 PCA <- prcomp(var_numericas_normalizado)
@@ -353,25 +343,25 @@ En formato de tabla:
 summary(PCA)
 ```
 
-### Número de componentes principales
+## Número de componentes principales
 Usaremos la función `fviz_screeplot` del paquete `factoextra`.
 
 ```{r, results = FALSE, message=FALSE, warning=FALSE}
 library(factoextra)
 ```
 
-#### Método del codo
+### Método del codo
 ```{r}
 fviz_screeplot(PCA, addlabels = TRUE)
 ```
 
-#### Método de la media de la varianza
+### Método de la media de la varianza
 ```{r}
 PCA$sdev
 mean(PCA$sdev^2)
 ```
 
-Aunque una sola componente ya explica la mayoría de la varianza y la segunda componente principal sólo mejora la situación en un 10%, tomamos dos componentes.
+Estos métodos sugieren entre 2 y 3 componentes principales. Tomaremos 2 en adelante.
 
 ### Visualización del ACP
 
@@ -387,7 +377,7 @@ En esta gráfica apreciamos cómo las variables MntFruits, MntFishProducts, MntS
 
 <!-- apartado e -->
 ## AF
-### Preconditions
+### Condiciones
 Visualizamos la matriz de correlaciones:
 ```{r}
 poly_cor <- polycor::hetcor(var_numericas_normalizado)$correlations
@@ -405,33 +395,33 @@ Las variables previamente mencionadas las vemos de nuevo altamente agrupadas, ju
 ### Modelos
 
 ```{r}
-modelo1 <- fa(poly_cor,
-  nfactors = 2,
-  rotate = "varimax",
-  fm = "mle"
-)
-```
+modelar <- function(nfactors) {
+  fa(poly_cor,
+            nfactors = nfactors,
+            rotate = "varimax",
+            fm = "mle"
+  )
+}
 
-```{r}
-modelo2 <- fa(poly_cor,
-  nfactors = 4,
-  rotate = "varimax",
-  fm = "mle"
-)
+modelo2 <- modelar(2)
+modelo3 <- modelar(3)
+modelo4 <- modelar(4)
 ```
 
 Obtenemos las comunalidades:
 ```{r }
-c1 <- sort(modelo1$communality, decreasing = TRUE)
-c2 <- sort(modelo2$communality, decreasing = TRUE)
-cbind(c1, c2)
+c1 <- sort(modelo2$communality, decreasing = TRUE)
+c2 <- sort(modelo3$communality, decreasing = TRUE)
+c3 <- sort(modelo4$communality, decreasing = TRUE)
+cbind(c1, c2, c3)
 ```
 
 y las unicidades:
 ```{r }
-u1 <- sort(modelo1$uniquenesses, decreasing = TRUE)
-u2 <- sort(modelo2$uniquenesses, decreasing = TRUE)
-cbind(u1, u2)
+u1 <- sort(modelo2$uniquenesses, decreasing = TRUE)
+u2 <- sort(modelo3$uniquenesses, decreasing = TRUE)
+u3 <- sort(modelo4$uniquenesses, decreasing = TRUE)
+cbind(u1, u2, u3)
 ```
 
 ### Número de factores
@@ -453,8 +443,9 @@ Estos últimos métodos sugieren entre 2 y 4 factores
 
 ### Interpretación
 ```{r}
-fa.diagram(modelo1)
 fa.diagram(modelo2)
+fa.diagram(modelo3)
+fa.diagram(modelo4)
 ```
 
 Atendiendo al segundo modelo, vemos que agrupa variables razonablemente conectadas.
@@ -464,15 +455,15 @@ Atendiendo al segundo modelo, vemos que agrupa variables razonablemente conectad
 ## Normalidad multivariante
 
 Primero comprobamos si hay outliers multivariantes:
-TODO: data sería sin la variable explicada
 ```{r}
 outliers <- MVN::mvn(data = var_numericas_normalizado[sample(nrow(var_numericas_normalizado), 1000), ], mvnTest = "hz", multivariateOutlierMethod = "quan")
 ```
 
-TODO: comentar algo
 ```{r}
-royston_test <- MVN::mvn(data = var_numericas_normalizado[sample(nrow(var_numericas_normalizado), 1000), ], mvnTest = "royston", multivariatePlot = "qq")
-
+royston_test <- MVN::mvn(
+  data = var_numericas_normalizado[sample(nrow(var_numericas_normalizado), 1000), ],
+  mvnTest = "royston", multivariatePlot = "qq"
+)
 royston_test$multivariateNormality
 ```
 
@@ -488,23 +479,102 @@ Sabiendo que la distribución no es en absoluto normal, procedemos a intentar cr
 
 ## Clasificación
 
-```{r}
-# pairs(
-#   x = data[sample(nrow(data), 100, replace = TRUE), ],
-#   # TODO: creo que sería sin replace = true, sino false
-#   col = c("green", "red")[data$class],
-#   pch = 19
-# )
-```
-### Homogeneidad de la varianza
+<!-- ```{r} -->
+<!-- pairs( -->
+<!--   x = var_numericas_normalizado[, c("")], -->
+<!--   col = c("blue", "orange")[datos$especie], pch = 19 -->
+<!-- ) -->
+<!-- ``` -->
 
-In the Bartlett test we saw that the data is not spherically distributed, but it is also the case that the variances are not homogeneous as can be determined form the boxM test:
+<!-- pairs( -->
+<!--   x = data[sample(nrow(data), 100, replace = TRUE), ], -->
+<!--   # TODO: creo que sería sin replace = true, sino false -->
+<!--   col = c("green", "red")[data$class], -->
+<!--   pch = 19 -->
+<!-- ) -->
+<!---->
+#### Homogeneidad de la varianza
 
-```{r}
+Veamos si las varianzas son homogéneas, usando el test boxM. Podemos clasificar de acuerdo con varias variables. Una posibilidad es considerar si el cliente aceptó la última oferta.
+
+```{r warning=FALSE, message=FALSE}
 library(biotools)
-# boxM(
-#   data = data[1:7],
-#   grouping = data[, 8] # variable explicada
-# )
+
+boxM(
+  data = var_numericas_normalizado,
+  grouping = data$Response
+)
 ```
+
+Asumimos la homogeneidad de las varianzas, al haber rechazado el test de contraste.
+
+## Modelos
+
+Antes de modelar, hacemos un split entrenamiento/test 80/20:
+```{r}
+train_proporc <- 0.8
+total <- nrow(var_numericas_normalizado)
+
+train_size <- train_proporc * total
+test_size <- total - train_size
+
+final_data <- var_numericas_normalizado
+final_data$Response <- data$Response
+
+indices_entrenamiento <- sample(nrow(final_data), size = train_size)
+datos_train <- final_data[indices_entrenamiento, ]
+datos_test <- final_data[-indices_entrenamiento, ]
+```
+
+Para los modelos utilizaremos la siguiente fórmula:
+```{r}
+formula <- as.formula(paste("Response", "~", paste(colnames(var_numericas_normalizado), collapse = "+")))
+print(formula)
+```
+
+Consideramos el modelo discriminante cuadrático siguiente:
+```{r warning=FALSE, message=FALSE}
+modelo_qda <- qda(formula, data = datos_train)
+modelo_qda
+```
+
+También creamos un modelo discriminante lineal, pero ya sabemos por adelantado que las hipótesis necesarias para este modelo,
+en particular la de normalidad multivariante, no se da.
+
+```{r}
+modelo_lda <- lda(formula, data = datos_train)
+modelo_lda
+```
+
+## Validación de los modelos
+
+```{r}
+prob_1 <- 1 == final_data$Response
+pipeline_validacion <- function(modelo, testing_dataset) {
+  prediccion <- predict(modelo, testing_dataset)
+
+  # print(str(prediccion))
+  error_medio <- mean(testing_dataset$Response != prediccion$class) * 100
+  print(paste("Tasa de error media: ", error_medio, "%"))
+}
+```
+
+```{r}
+pipeline_validacion(modelo_qda, datos_test)
+pipeline_validacion(modelo_lda, datos_test)
+```
+
+Se nos presenta un caso en el que a pesar de la mayor robustez del modelo cuadrático, el modelo lineal tiene una tasa de error razonable. 
+Como nota de desarrollo sobre este trabajo, lo que hemos realizado es validación cruzada con $k = 1$. Típicamente se tomaría $k$ un valor más 
+alto, por el cual se entrenarían los modelos con distintos conjuntos de entrenamiento, para ser cada uno evaluado y tomar así como
+valor real del error la media de ellos, aportando mucha más robustez a esta figura.
+
+Al mismo tiempo, lo comparamos con el clasificador más simple: el que devuelve la clase mayoritaria del conjunto de entrenamiento.
+
+```{r}
+table(datos_train$Response) / nrow(datos_train)
+table(datos_test$Response) / nrow(datos_test)
+```
+Con lo cual la tasa de error media en el conjunto de testeo sería 14.4%. Este rendimiento es esencialmente el mismo que el obtenido en los modelos tanto cuadrático
+como lineal, con lo cual su valor puramente predictivo es esencialmente nulo.
 
