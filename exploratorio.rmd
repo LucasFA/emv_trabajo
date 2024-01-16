@@ -18,21 +18,21 @@ output:
 <!--
 Esquema del trabajo de acuerdo al guión:
 # Análisis exploratorio univariante
-## a) Recodificaciones/agrupaciones de datos/variables (preprocesado)
-## b) Valores perdidos
-## c) Análisis descriptivo (summary, código de clase)
-## d) Outliers (código de clase)
-## e) Comprobar normalidad. qqplot
-## f) Otros
+## a) Recodificaciones/agrupaciones de datos/variables (preprocesado) hecho
+## b) Valores perdidos hecho
+## c) Análisis descriptivo (summary, código de clase) hecho
+## d) Outliers (código de clase) hecho
+## e) Comprobar normalidad. qqplot hecho. No normal
+## f) Otros?
 
 # Análisis exploratorio multivariante
-## a) Correlación (código de clase. test de Bartlett)
-## b) Si se han tratado los outliers, ACP (código de clase)
-## c) Si no se han tratado los NA, (código de clase)
+## a) Correlación (código de clase. test de Bartlett) hecho
+## b) Si se han tratado los outliers, ACP (código de clase) hecho
+## c) Si no se han tratado los NA, (código de clase) hecho
 ## d) Estudio posibilidad de aplicar ACP y aplicarlo(código de clase)
-## e) Elegir número de variables y aplicar AF(código de clase)
-## f) Normalidad multivariante (código de clase, tema 5)
-## g) Clasificador (código de clase)
+## e) Elegir número de variables y aplicar AF(código de clase) hecho
+## f) Normalidad multivariante (código de clase, tema 5) hecho
+## g) Clasificador (código de clase) hecho
 ### Lineal
 ### Cuadrático
 ## h) Validar modelos 
@@ -517,7 +517,19 @@ boxM(
 
 Asumimos la homogeneidad de las varianzas, al haber rechazado el test de contraste.
 
-## Modelos
+## Modelado de clustering
+
+Aplicamos un método jerárquico:
+
+```{r}
+dendrogram <- hclust(dist(var_numericas_normalizado, method = "euclidean"), method = "ward.D")
+ggdendro::ggdendrogram(dendrogram, rotate = FALSE, labels = FALSE, theme_dendro = TRUE) +
+  labs(title = "Dendrograma")
+```
+
+Se observa que el clustering es efectivo en distinguir distintos subgrupos de clientes en base a las variables numéricas.
+
+## Modelos discriminantes
 
 Antes de modelar, hacemos un split entrenamiento/test 80/20:
 ```{r}
