@@ -574,7 +574,6 @@ prob_1 <- 1 == final_data$Response
 pipeline_validacion <- function(modelo, testing_dataset) {
   prediccion <- predict(modelo, testing_dataset)
 
-  # print(str(prediccion))
   error_medio <- mean(testing_dataset$Response != prediccion$class) * 100
   print(paste("Tasa de error media: ", error_medio, "%"))
 }
