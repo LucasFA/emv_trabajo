@@ -12,7 +12,7 @@ output:
       collapsed: false
       smooth_scroll: false
   pdf_document:
-    keep_tex: false
+    keep_tex: true
 ---
 
 <!--
@@ -124,6 +124,11 @@ Aplicar clustering para segmentar a la clientela.
 str(data)
 colnames(data)
 summary(data)
+frecuencias <- function(colname) {
+  print(colname)
+  print(table(data[, colname]))
+}
+lapply(c("AcceptedCmp1", "AcceptedCmp2", "AcceptedCmp3", "AcceptedCmp4", "AcceptedCmp5", "Complain", "Response"), frecuencias)
 ```
 
 ## Procesado
