@@ -26,7 +26,7 @@ Esquema del trabajo de acuerdo al guión:
 ## f) Otros
 
 # Análisis exploratorio multivariante
-## a)Correlación (código de clase. test de Bartlett)
+## a) Correlación (código de clase. test de Bartlett)
 ## b) Si se han tratado los outliers, ACP (código de clase)
 ## c) Si no se han tratado los NA, (código de clase)
 ## d) Estudio posibilidad de aplicar ACP y aplicarlo(código de clase)
@@ -250,6 +250,23 @@ for (idx in seq_along(var_categoricas)) {
 }
 ```
 
+Vamos a eliminar los outliers más extremos de las variables numéricas con la siguiente función:
+
+```{r}
+outlier<-function(data,na.rm=T){
+  H<-1.5*IQR(data)
+  data[data<quantile(data,0.25,na.rm = T)-H]<-NA
+  data[data>quantile(data,0.75, na.rm = T)+H]<-NA
+  data[is.na(data)]<-mean(data, na.rm = T)
+  H<-1.5*IQR(data)
+
+  if (TRUE %in% (data<quantile(data,0.25,na.rm = T)-H) ||
+      TRUE %in% (data>quantile(data,0.75,na.rm = T)+H))
+    outlier(data)
+  else
+    return(data)
+}
+```
 <!-- TODO: estudiar cada una -->
 <!-- TODO: eliminar todos los outliers y ya -->
 
@@ -376,8 +393,8 @@ fviz_pca_var(PCA,
 En esta gráfica apreciamos cómo las variables MntFruits, MntFishProducts, MntSweetProducts tienen una alta similaridad.
 
 <!-- apartado e -->
-## AF
-### Condiciones
+# AF
+## Condiciones
 Visualizamos la matriz de correlaciones:
 ```{r}
 poly_cor <- polycor::hetcor(var_numericas_normalizado)$correlations
@@ -392,7 +409,7 @@ En estas gráficas también apreciamos la alta correlación entre las variables 
 
 Las variables previamente mencionadas las vemos de nuevo altamente agrupadas, junto a, también, el número de compras por catálogo.
 
-### Modelos
+## Modelos
 
 ```{r}
 modelar <- function(nfactors) {
@@ -424,7 +441,7 @@ u3 <- sort(modelo4$uniquenesses, decreasing = TRUE)
 cbind(u1, u2, u3)
 ```
 
-### Número de factores
+## Número de factores
 
 Usaremos el scree plot y el análisis paralelo para asistirnos en la elección de factores.
 
@@ -441,7 +458,7 @@ fa.parallel(
 Estos últimos métodos sugieren entre 2 y 4 factores
 
 
-### Interpretación
+## Interpretación
 ```{r}
 fa.diagram(modelo2)
 fa.diagram(modelo3)
@@ -467,7 +484,6 @@ royston_test <- MVN::mvn(
 royston_test$multivariateNormality
 ```
 
-TODO: data sería sin la variable explicada
 ```{r}
 hz_test <- MVN::mvn(data = var_numericas_normalizado, mvnTest = "hz")
 hz_test$multivariateNormality
@@ -477,7 +493,7 @@ Sabiendo que la distribución no es en absoluto normal, procedemos a intentar cr
 
 <!-- Apartado g -->
 
-## Clasificación
+# Clasificación
 
 <!-- ```{r} -->
 <!-- pairs( -->
@@ -493,7 +509,7 @@ Sabiendo que la distribución no es en absoluto normal, procedemos a intentar cr
 <!--   pch = 19 -->
 <!-- ) -->
 <!---->
-#### Homogeneidad de la varianza
+## Homogeneidad de la varianza
 
 Veamos si las varianzas son homogéneas, usando el test boxM. Podemos clasificar de acuerdo con varias variables. Una posibilidad es considerar si el cliente aceptó la última oferta.
 
@@ -546,7 +562,7 @@ modelo_lda <- lda(formula, data = datos_train)
 modelo_lda
 ```
 
-## Validación de los modelos
+## Validación
 
 ```{r}
 prob_1 <- 1 == final_data$Response
